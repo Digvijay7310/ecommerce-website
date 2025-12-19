@@ -89,6 +89,18 @@ export const deleteProduct = async(req, res) => {
         if(req.user._id.toString() !== product.admin.toString()){
             return res.status(403).json({message: "Access denied"})
         }
+
+        if(product.mainImage?.fileId){
+            await imagekit.deleteFile(product.mainImage.fileId)
+        }
+
+        if(product.images?.length > 0){
+            for (const img of product.images){
+                if(img.fileId){
+                    await imagekit.deleteFile(img.fileId)
+                }
+            }
+        }
     
          await Product.findByIdAndDelete(productId);
         res.status(200).json({message: "Product deleted"})
@@ -97,4 +109,36 @@ export const deleteProduct = async(req, res) => {
     }
 
 
+}
+
+export const searchProducts = async(req, res) => {
+    try {
+        const {search, category, page = 1, limit = 10} = req.query;
+
+        const query = {}
+
+        if(search){
+            query.name = { $regex: search, $options: "i" };
+        }
+
+        if(category){
+            query.category = category
+        }
+
+        const total = await Product.countDocuments(query)
+
+        const products = await Product.find(query)
+        .skip((page - 1) * limit)
+        .limit(parseInt(limit))
+        .select("-__v");
+
+        return res.status(200).json({
+            total,
+            page: parseInt(page),
+            limit: parseInt(limit),
+            products
+        })
+    } catch (error) {
+        console.error("Searh products error: ", error)
+    }
 }

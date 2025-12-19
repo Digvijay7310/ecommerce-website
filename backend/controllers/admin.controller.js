@@ -1,4 +1,6 @@
 import { Admin } from "../models/admin.model.js";
+import Customer from "../models/customer.model.js";
+import { Product } from "../models/product.model.js";
 
 
 export const registerAdmin = async(req, res) => {
@@ -106,4 +108,18 @@ export const logoutAdmin = async(req, res) => {
         sameSite: 'lax',
     })
     res.status(200).json({message: "logout successfull"})
+}
+
+export const totalCustomersAndProducts = async(req, res) => {
+    try {
+        const customers = await Customer.countDocuments()
+        const products = await Product.countDocuments()
+
+        return res.status(200).json({
+            customers,
+            products
+        });
+    } catch (error) {
+        console.error("Error fething total: ", error)
+    }
 }
